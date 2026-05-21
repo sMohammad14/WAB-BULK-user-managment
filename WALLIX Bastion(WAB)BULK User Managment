@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WALLIX Bastion(WAB)BULK User Managment
+</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --primary-light: #eff6ff;
+            --success: #16a34a;
+            --success-bg: #f0fdf4;
+            --error: #dc2626;
+            --error-bg: #fef2f2;
+            --warning: #d97706;
+            --warning-bg: #fffbeb;
+            --bg: #f1f5f9;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-secondary: #64748b;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --radius: 10px;
+            --radius-sm: 6px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06);
+            --font-mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+            --transition: 0.2s ease;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg); color: var(--text); line-height:1.5;
+            min-height:100vh;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a5f, #1e40af);
+            color:#fff; padding:14px 28px; display:flex; align-items:center; gap:12px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.1); position:sticky; top:0; z-index:100;
+        }
+        .header h1 { font-size:1.15rem; font-weight:700; }
+        .header .badge { margin-left:auto; background:rgba(255,255,255,0.15); padding:4px 12px; border-radius:20px; font-size:0.7rem; }
+
+        .container { max-width:1300px; margin:0 auto; padding:20px 24px; display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+        @media(max-width:900px){ .container{grid-template-columns:1fr;} }
+
+        .card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; box-shadow:var(--shadow); transition: all var(--transition); }
+        .card.locked-card { filter: grayscale(100%); opacity: 0.5; pointer-events: none; user-select: none; }
+        .card-header { display:flex; align-items:center; gap:8px; margin-bottom:14px; padding-bottom:10px; border-bottom:1px solid var(--border); }
+        .card-header h3 { font-size:0.9rem; font-weight:700; }
+
+        .config-grid { display:grid; grid-template-columns:2fr 1fr 1fr 1fr auto; gap:10px; align-items:end; }
+        @media(max-width:900px){ .config-grid{grid-template-columns:1fr 1fr;} }
+        .form-group { display:flex; flex-direction:column; gap:3px; }
+        .form-group label { font-size:0.7rem; font-weight:600; text-transform:uppercase; color:var(--text-secondary); }
+        .form-group input, .form-group select { padding:8px 10px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.85rem; background:#fafbfc; font-family:inherit; }
+        .form-group input:focus, .form-group select:focus { outline:none; border-color:#93c5fd; background:#fff; }
+
+        .btn-login { padding:8px 16px; font-size:0.85rem; font-weight:600; border-radius:var(--radius-sm); cursor:pointer; border:none; background:var(--primary); color:#fff; white-space:nowrap; height:fit-content; align-self:end; transition:all var(--transition); }
+        .btn-login:hover { background:var(--primary-hover); }
+        .btn-login:disabled { opacity:0.5; pointer-events:none; }
+
+        .upload-zone { border:2px dashed var(--border); border-radius:var(--radius); padding:22px; text-align:center; cursor:pointer; background:#fafbfc; margin-bottom:10px; transition: all var(--transition); }
+        .upload-zone:hover, .upload-zone.drag-over { border-color:var(--primary); background:var(--primary-light); }
+        .user-list { max-height:250px; overflow-y:auto; border:1px solid var(--border); border-radius:var(--radius-sm); background:#fafbfc; }
+        .user-chip { display:inline-flex; align-items:center; gap:4px; background:#fff; border:1px solid var(--border); border-radius:20px; padding:3px 10px; margin:3px; font-size:0.78rem; font-family:var(--font-mono); }
+
+        .field-item { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid #f1f5f9; flex-wrap:wrap; }
+        .field-item:last-child { border-bottom:none; }
+        .field-item input[type="checkbox"] { width:16px; height:16px; accent-color:var(--primary); }
+        .field-item .field-label { font-size:0.8rem; font-weight:600; min-width:160px; }
+        .field-item .field-control { flex:1; min-width:140px; }
+        .field-item .field-control input, .field-item .field-control select { width:100%; padding:7px 8px; border:1.5px solid var(--border); border-radius:var(--radius-sm); font-size:0.85rem; background:#fafbfc; font-family:inherit; }
+        .field-item .field-control input:disabled, .field-item .field-control select:disabled { opacity:0.5; pointer-events:none; background:#f1f5f9; }
+        .toggle-switch { position:relative; display:inline-block; width:40px; height:22px; vertical-align:middle; }
+        .toggle-switch input { opacity:0; width:0; height:0; }
+        .toggle-slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#cbd5e1; border-radius:22px; transition:var(--transition); }
+        .toggle-slider::before { content:""; position:absolute; height:16px; width:16px; left:3px; bottom:3px; background:white; border-radius:50%; transition:var(--transition); }
+        .toggle-switch input:checked+.toggle-slider { background:var(--primary); }
+        .toggle-switch input:checked+.toggle-slider::before { transform:translateX(18px); }
+        .toggle-switch input:disabled+.toggle-slider { cursor:not-allowed; opacity:0.6; }
+        .toggle-status { font-size:0.75rem; font-weight:600; margin-left:6px; vertical-align:middle; color:var(--text); min-width:30px; display:inline-block; }
+
+        .actions-card { grid-column:1/-1; display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding:14px 20px; }
+        .btn { padding:8px 18px; font-size:0.85rem; font-weight:600; border-radius:var(--radius-sm); cursor:pointer; border:none; transition:all var(--transition); display:inline-flex; align-items:center; gap:6px; font-family:inherit; }
+        .btn:disabled { opacity:0.45; pointer-events:none; }
+        .btn-primary { background:var(--primary); color:#fff; box-shadow:0 2px 6px rgba(37,99,235,0.3); }
+        .btn-primary:hover:not(:disabled) { background:var(--primary-hover); }
+        .btn-outline { background:#fff; border:1.5px solid var(--border); }
+        .btn-outline:hover:not(:disabled) { border-color:#93c5fd; background:#f8fafc; }
+        .btn-danger { background:#fff; color:var(--error); border:1.5px solid #fecaca; }
+        .btn-danger:hover:not(:disabled) { background:var(--error-bg); }
+        .btn-sm { padding:5px 12px; font-size:0.78rem; }
+        .progress-wrap { flex:1; min-width:180px; height:6px; background:#e2e8f0; border-radius:10px; overflow:hidden; }
+        .progress-fill { height:100%; background:linear-gradient(90deg,#2563eb,#3b82f6); width:0%; transition:width 0.3s; }
+        .progress-text { font-size:0.8rem; font-weight:600; color:var(--text-secondary); min-width:60px; }
+
+        .log-card { grid-column:1/-1; }
+        .log-card.locked-card { pointer-events:auto; opacity:1; filter:none; }
+        .log-output { background:#1e293b; color:#e2e8f0; font-family:var(--font-mono); font-size:0.75rem; padding:0; border-radius:var(--radius-sm); max-height:350px; overflow-y:auto; white-space:nowrap; }
+        .log-table { width:100%; border-collapse:collapse; }
+        .log-table td { padding:6px 12px; vertical-align:top; border-bottom:1px solid #334155; }
+        .log-table .log-timestamp { color:#64748b; white-space:nowrap; width:80px; }
+        .log-table .log-message { white-space:pre-wrap; word-break:break-word; }
+        .log-table .log-success .log-message { color:#4ade80; }
+        .log-table .log-error .log-message { color:#f87171; }
+        .log-table .log-warning .log-message { color:#fbbf24; }
+        .log-table .log-info .log-message { color:#93c5fd; }
+
+        .toast-container { position:fixed; top:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:8px; }
+        .toast { padding:10px 16px; border-radius:var(--radius-sm); font-size:0.8rem; font-weight:600; color:#fff; box-shadow:0 8px 20px rgba(0,0,0,0.15); animation:slideIn 0.3s ease; }
+        .toast.success { background:var(--success); } .toast.error { background:var(--error); } .toast.warning { background:var(--warning); }
+        @keyframes slideIn { from{transform:translateX(120%);opacity:0;} to{transform:translateX(0);opacity:1;} }
+        .hidden { display:none !important; }
+        .zero-pad-option { display:flex; align-items:center; gap:8px; margin:8px 0; font-size:0.8rem; }
+        .zero-pad-option input[type="checkbox"] { width:16px; height:16px; accent-color:var(--primary); }
+        .footer { text-align:center; font-size:16px; padding:20px 20px; color:var(--text-secondary); margin-top:20px; }
+        .footer a { color:#f37324; font-weight:bold; text-decoration:none; }
+        .footer a:hover { text-decoration:underline; }
+        .auth-status { font-size:0.7rem; font-weight:600; padding:3px 8px; border-radius:10px; display:inline-block; }
+        .auth-status.unlocked { background:#fef3c7; color:#92400e; }
+        .auth-status.locked { background:#f0fdf4; color:#16a34a; }
+        .date-picker-icon { background:none; border:1.5px solid var(--border); border-radius:var(--radius-sm); padding:6px 8px; cursor:pointer; font-size:0.9rem; background:#fafbfc; }
+        .date-picker-icon:hover { background:#eef2ff; }
+        .jalali-date-display {
+            font-size: 1em;
+            font-weight: bold;
+            color: #000000;
+            margin-top: 4px;
+            margin-left: 28px;
+            direction: rtl;
+            text-align: right;
+            font-family: 'Tahoma', 'Segoe UI', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>WALLIX Bastion (WAB) - BULK User Managment</h1>
+        <span class="badge">API v2.0+</span>
+    </div>
+    <div class="toast-container" id="toastContainer"></div>
+
+    <div class="container" id="mainContainer">
+        <div class="card" id="configCard" style="grid-column:1/-1;">
+            <div class="card-header"><h3>API Connection</h3><span class="auth-status unlocked" id="authStatusBadge">Not connected</span></div>
+            <div class="config-grid">
+                <div class="form-group"><label>Base URL</label><input type="text" id="apiBaseUrl" placeholder="https://bastion-address"></div>
+                <div class="form-group"><label>Auth Method</label><select id="authType"><option value="basic">Basic Auth</option><option value="apikey">API Key</option></select></div>
+                <div class="form-group" id="basicUserGroup"><label>Username</label><input type="text" id="basicUsername"></div>
+                <div class="form-group" id="basicPassGroup"><label>Password</label><input type="password" id="basicPassword"></div>
+                <div class="form-group hidden" id="apiKeyUserGroup"><label>X-Auth-User</label><input type="text" id="apiKeyUser"></div>
+                <div class="form-group hidden" id="apiKeyValueGroup"><label>X-Auth-Key</label><input type="password" id="apiKeyValue"></div>
+                <button class="btn-login" id="btnLogin" onclick="doLogin()">Connect &amp; Login</button>
+            </div>
+        </div>
+
+        <div class="card locked-card" id="uploadCard">
+            <div class="card-header"><h3>User List</h3><span class="badge" id="userCountBadge" style="display:none;">0</span></div>
+            <div class="upload-zone" id="uploadZone">Drop a <strong>.txt</strong> file (one username per line) or click to browse</div>
+            <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
+            <div class="zero-pad-option"><input type="checkbox" id="chkZeroPad" onchange="applyZeroPad()"><label for="chkZeroPad">Pad numeric usernames to 10 digits with leading zeros</label></div>
+            <div class="user-list"><div class="user-list-inner" id="userListInner" style="padding:8px; display:flex; flex-wrap:wrap;"></div></div>
+            <div style="font-size:0.7rem; color:var(--text-secondary); margin-top:6px;" id="userCountInfo"></div>
+        </div>
+
+        <div class="card locked-card" id="fieldsCard">
+            <div class="card-header"><h3>Fields to Update</h3><span style="font-size:0.7rem; color:var(--warning);">Select at least one</span></div>
+            <div class="field-item"><input type="checkbox" id="chkIpSource" onchange="toggleField('ip_source')"><span class="field-label">Source IP</span><div class="field-control"><input type="text" id="valIpSource" placeholder="e.g. 10.10.47.10" disabled></div></div>
+            <div class="field-item"><input type="checkbox" id="chkProfile" onchange="toggleField('profile')"><span class="field-label">Profile</span><div class="field-control"><select id="valProfile" disabled style="width:100%;"><option value="">-- Login first to load profiles --</option></select></div></div>
+            <div class="field-item"><input type="checkbox" id="chkPassword" onchange="toggleField('password')"><span class="field-label">Password</span><div class="field-control"><input type="password" id="valPassword" placeholder="New password" disabled></div></div>
+            <div class="field-item"><input type="checkbox" id="chkForceChangePwd" onchange="toggleField('force_change_pwd')"><span class="field-label">Password Force To Change</span><div class="field-control" style="display:flex; align-items:center; gap:8px;"><label class="toggle-switch"><input type="checkbox" id="valForceChangePwd" disabled onchange="updateToggleStatus('force_change_pwd')"><span class="toggle-slider"></span></label><span class="toggle-status" id="forceChangePwdStatus">No</span></div></div>
+            <div class="field-item"><input type="checkbox" id="chkExpirationDate" onchange="toggleField('expiration_date')"><span class="field-label">Expiration</span><div class="field-control" style="display:flex; flex-direction:column; gap:4px;"><div style="display:flex; gap:6px; align-items:center;"><input type="text" id="valExpirationDate" placeholder="YYYY/MM/DD - HH:MM" disabled style="flex:1;"><input type="datetime-local" id="hiddenDatePicker" style="position:absolute; opacity:0; pointer-events:none; width:1px; height:1px;" tabindex="-1"><button class="date-picker-icon" id="datePickerBtn" onclick="openDatePicker()" disabled title="Pick date & time">📅</button></div><div class="jalali-date-display" id="jalaliDisplay"></div></div></div>
+            <div class="field-item"><input type="checkbox" id="chkIsDisabled" onchange="toggleField('is_disabled')"><span class="field-label">Disabled</span><div class="field-control" style="display:flex; align-items:center; gap:8px;"><label class="toggle-switch"><input type="checkbox" id="valIsDisabled" disabled onchange="updateToggleStatus('is_disabled')"><span class="toggle-slider"></span></label><span class="toggle-status" id="isDisabledStatus">No</span></div></div>
+        </div>
+
+        <div class="card locked-card actions-card" id="actionsCard">
+            <button class="btn btn-primary" id="btnRun" disabled onclick="runUpdates()">Run Updates</button>
+            <button class="btn btn-danger btn-sm" id="btnStop" style="display:none;" onclick="stopUpdates()">Stop</button>
+            <div class="progress-wrap" id="progressWrap" style="display:none;"><div class="progress-fill" id="progressFill"></div></div>
+            <span class="progress-text" id="progressText" style="display:none;">0/0</span>
+            <button class="btn btn-outline btn-sm" id="btnExportCSV" disabled onclick="exportCSV()">CSV Report</button>
+            <button class="btn btn-outline btn-sm" onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div class="card log-card locked-card" id="logCard">
+            <div class="card-header"><h3>Execution Log</h3><span class="badge" id="logSummaryBadge" style="display:none;"></span></div>
+            <div class="log-output" id="logOutput"><table class="log-table" id="logTable"><tbody></tbody></table></div>
+        </div>
+    </div>
+
+    <footer class="footer">by <a href="https://github.com/smohammad14" target="_blank" rel="noopener noreferrer">sMohammad14</a></footer>
+
+    <script>
+        (function() {
+            const $ = (s) => document.querySelector(s);
+            const apiBaseUrl = $('#apiBaseUrl'), authType = $('#authType'), basicUsername = $('#basicUsername'), basicPassword = $('#basicPassword');
+            const apiKeyUser = $('#apiKeyUser'), apiKeyValue = $('#apiKeyValue'), btnLogin = $('#btnLogin'), authStatusBadge = $('#authStatusBadge');
+            const uploadZone = $('#uploadZone'), fileInput = $('#fileInput'), userListInner = $('#userListInner'), userCountBadge = $('#userCountBadge'), userCountInfo = $('#userCountInfo'), chkZeroPad = $('#chkZeroPad');
+            const chkIpSource = $('#chkIpSource'), valIpSource = $('#valIpSource'), chkProfile = $('#chkProfile'), valProfile = $('#valProfile'), chkPassword = $('#chkPassword'), valPassword = $('#valPassword');
+            const chkForceChangePwd = $('#chkForceChangePwd'), valForceChangePwd = $('#valForceChangePwd'), chkExpirationDate = $('#chkExpirationDate'), valExpirationDate = $('#valExpirationDate');
+            const hiddenDatePicker = $('#hiddenDatePicker'), datePickerBtn = $('#datePickerBtn'), jalaliDisplay = $('#jalaliDisplay'), chkIsDisabled = $('#chkIsDisabled'), valIsDisabled = $('#valIsDisabled');
+            const btnRun = $('#btnRun'), btnStop = $('#btnStop'), progressWrap = $('#progressWrap'), progressFill = $('#progressFill'), progressText = $('#progressText'), btnExportCSV = $('#btnExportCSV');
+            const logOutput = $('#logOutput'), logTableBody = $('#logTable tbody'), logSummaryBadge = $('#logSummaryBadge'), toastContainer = $('#toastContainer');
+            const forceChangePwdStatus = $('#forceChangePwdStatus'), isDisabledStatus = $('#isDisabledStatus');
+            const uploadCard = $('#uploadCard'), fieldsCard = $('#fieldsCard'), actionsCard = $('#actionsCard'), logCard = $('#logCard'), configCard = $('#configCard');
+
+            let users = [], rawUsernames = [], results = [], abortController = null, isRunning = false, isAuthenticated = false, autoScroll = true;
+
+            function updateAuthFields() {
+                const m = authType.value;
+                document.getElementById('basicUserGroup').classList.toggle('hidden', m!=='basic');
+                document.getElementById('basicPassGroup').classList.toggle('hidden', m!=='basic');
+                document.getElementById('apiKeyUserGroup').classList.toggle('hidden', m!=='apikey');
+                document.getElementById('apiKeyValueGroup').classList.toggle('hidden', m!=='apikey');
+            }
+            authType.addEventListener('change', updateAuthFields);
+            updateAuthFields();
+
+            uploadZone.addEventListener('click', ()=>{ if(isAuthenticated) fileInput.click(); });
+            fileInput.addEventListener('change', e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); });
+            uploadZone.addEventListener('dragover', e=>{ e.preventDefault(); uploadZone.classList.add('drag-over'); });
+            uploadZone.addEventListener('dragleave', ()=>uploadZone.classList.remove('drag-over'));
+            uploadZone.addEventListener('drop', e=>{ e.preventDefault(); uploadZone.classList.remove('drag-over'); if(e.dataTransfer.files[0] && isAuthenticated) handleFile(e.dataTransfer.files[0]); });
+
+            function handleFile(file) {
+                if(!isAuthenticated) return;
+                const reader = new FileReader();
+                reader.onload = e => { rawUsernames = [...new Set(e.target.result.split(/\r?\n/).map(l=>l.trim()).filter(l=>l && !l.startsWith('#')))]; applyZeroPad(); };
+                reader.readAsText(file, 'UTF-8');
+            }
+
+            window.applyZeroPad = function() {
+                users = rawUsernames.length ? rawUsernames.map(u => (chkZeroPad.checked && /^\d+$/.test(u) && u.length<10) ? u.padStart(10,'0') : u) : [];
+                renderUserList(); updateRunButton();
+                userCountBadge.textContent = users.length; userCountBadge.style.display = users.length ? 'inline-block' : 'none';
+                userCountInfo.textContent = users.length ? `${users.length} usernames loaded.` : 'No valid usernames.';
+            };
+
+            function renderUserList() { userListInner.innerHTML = users.map(u => `<span class="user-chip"><span style="width:6px;height:6px;border-radius:50%;background:#94a3b8;display:inline-block;"></span>${escapeHTML(u)}</span>`).join(''); }
+
+            const fieldMap = {
+                ip_source: {chk:chkIpSource, val:valIpSource, type:'text'}, profile: {chk:chkProfile, val:valProfile, type:'select'},
+                password: {chk:chkPassword, val:valPassword, type:'password'}, force_change_pwd: {chk:chkForceChangePwd, val:valForceChangePwd, type:'checkbox'},
+                expiration_date: {chk:chkExpirationDate, val:valExpirationDate, type:'text'}, is_disabled: {chk:chkIsDisabled, val:valIsDisabled, type:'checkbox'}
+            };
+
+            window.toggleField = function(name) {
+                const fm = fieldMap[name]; if(!fm) return;
+                const en = fm.chk.checked; fm.val.disabled = !en;
+                if(name==='expiration_date') { datePickerBtn.disabled = !en; if(!en){ valExpirationDate.value=''; hiddenDatePicker.value=''; jalaliDisplay.textContent=''; } }
+                if(fm.type==='checkbox' && !en) { fm.val.checked = false; if(name==='force_change_pwd') updateToggleStatus('force_change_pwd'); if(name==='is_disabled') updateToggleStatus('is_disabled'); }
+                if(name==='password') handlePasswordChange();
+                if(name==='force_change_pwd') updateToggleStatus('force_change_pwd');
+                if(name==='is_disabled') updateToggleStatus('is_disabled');
+                updateRunButton();
+            };
+
+            valPassword.addEventListener('input', ()=>{ if(chkPassword.checked) handlePasswordChange(); });
+            function handlePasswordChange() {
+                const set = chkPassword.checked && valPassword.value.trim()!=='';
+                if(set) { chkForceChangePwd.checked=true; valForceChangePwd.checked=true; valForceChangePwd.disabled=true; chkForceChangePwd.disabled=true; updateToggleStatus('force_change_pwd'); }
+                else if(chkPassword.checked && valPassword.value.trim()==='') { chkForceChangePwd.disabled=false; valForceChangePwd.disabled=!chkForceChangePwd.checked; }
+                else if(!chkPassword.checked) { chkForceChangePwd.disabled=false; valForceChangePwd.disabled=!chkForceChangePwd.checked; }
+                updateRunButton();
+            }
+
+            function updateToggleStatus(n) {
+                if(n==='force_change_pwd') forceChangePwdStatus.textContent = valForceChangePwd.checked ? 'Yes' : 'No';
+                else if(n==='is_disabled') isDisabledStatus.textContent = valIsDisabled.checked ? 'Yes' : 'No';
+            }
+            window.updateToggleStatus = updateToggleStatus;
+            function gregorianToJalali(gy, gm, gd) {
+                const refDate = new Date(2026, 2, 21);
+                const targetDate = new Date(gy, gm - 1, gd);
+                let diffDays = Math.round((targetDate - refDate) / (1000 * 60 * 60 * 24));
+                let jy = 1405;
+                let remaining = diffDays;
+                if (remaining >= 0) {
+                    while (true) {
+                        const yearDays = (jy % 4 === 3) ? 366 : 365;
+                        if (remaining < yearDays) break;
+                        remaining -= yearDays;
+                        jy++;
+                    }
+                } else {
+                    remaining = -remaining;
+                    jy = 1404;
+                    while (true) {
+                        const yearDays = (jy % 4 === 3) ? 366 : 365;
+                        if (remaining <= yearDays) {
+                            remaining = yearDays - remaining;
+                            break;
+                        }
+                        remaining -= yearDays;
+                        jy--;
+                    }
+                }
+                const monthLengths = [31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29];
+                if (jy % 4 === 3) monthLengths[11] = 30;
+                let jm = 0;
+                while (jm < 12 && remaining >= monthLengths[jm]) {
+                    remaining -= monthLengths[jm];
+                    jm++;
+                }
+                return { jy, jm: jm + 1, jd: remaining + 1 };
+            }
+
+            function formatJalaliDate(gy, gm, gd) {
+                const { jy, jm, jd } = gregorianToJalali(gy, gm, gd);
+                const persianMonths = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
+                const toPersianDigits = num => String(num).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+                return `${toPersianDigits(jd)} ${persianMonths[jm-1]} ${toPersianDigits(jy)}`;
+            }
+
+            function updateJalaliDisplay() {
+                try {
+                    const raw = valExpirationDate.value.trim();
+                    if (!chkExpirationDate.checked || !raw) { jalaliDisplay.textContent = ''; return; }
+                    const iso = parseCustomDateToISO(raw);
+                    if (!iso) { jalaliDisplay.textContent = ''; return; }
+                    const [dp] = iso.split('T');
+                    const [gy, gm, gd] = dp.split('-').map(Number);
+                    jalaliDisplay.textContent = formatJalaliDate(gy, gm, gd);
+                } catch (e) { jalaliDisplay.textContent = ''; }
+            }
+
+            function parseCustomDateToISO(v) {
+                let s = v.trim(); if (!s) return null;
+                s = s.replace(/\//g, '-');
+                s = s.replace(/ - /g, ' ');
+                s = s.replace(/\s+/g, ' ');
+                const parts = s.split(' '); if (parts.length < 2) return null;
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(parts[0])) return null;
+                if (!/^\d{2}:\d{2}$/.test(parts[1])) return null;
+                return parts[0] + 'T' + parts[1];
+            }
+
+            function autoFormatExpirationInput(raw) {
+                let d = raw.replace(/\D/g, ''); if (d.length > 12) d = d.substring(0, 12);
+                let f = '';
+                if (d.length > 0) f += d.substring(0, 4);
+                if (d.length > 4) f += '/' + d.substring(4, 6);
+                if (d.length > 6) f += '/' + d.substring(6, 8);
+                if (d.length > 8) f += ' - ' + d.substring(8, 10);
+                if (d.length > 10) f += ':' + d.substring(10, 12);
+                return f;
+            }
+
+            function handleExpirationChange() {
+                const formatted = autoFormatExpirationInput(valExpirationDate.value);
+                if (formatted !== valExpirationDate.value) valExpirationDate.value = formatted;
+                const iso = parseCustomDateToISO(formatted);
+                if (iso) hiddenDatePicker.value = iso;
+                updateJalaliDisplay();
+                updateRunButton();
+            }
+
+            valExpirationDate.addEventListener('input', handleExpirationChange);
+            valExpirationDate.addEventListener('paste', () => setTimeout(handleExpirationChange, 10));
+            valExpirationDate.addEventListener('blur', handleExpirationChange);
+            hiddenDatePicker.addEventListener('change', function () {
+                const formatted = (() => { const p = this.value.split('T'); if (p.length !== 2) return ''; const [y, m, d] = p[0].split('-'); const [h, min] = p[1].split(':'); return `${y}/${m}/${d} - ${h}:${min}`; })();
+                valExpirationDate.value = formatted;
+                updateJalaliDisplay();
+                updateRunButton();
+            });
+
+            window.openDatePicker = function () { if (datePickerBtn.disabled) return; if (hiddenDatePicker.showPicker) hiddenDatePicker.showPicker(); else hiddenDatePicker.click(); };
+
+            function parseExpirationForAPI() { const iso = parseCustomDateToISO(valExpirationDate.value); return iso ? iso.replace('T', ' ') : null; }
+
+            valProfile.addEventListener('change', updateRunButton);
+
+            function getSelectedFields() {
+                const sel = [];
+                for (const [name, fm] of Object.entries(fieldMap)) {
+                    if (!fm.chk.checked) continue;
+                    let val;
+                    if (fm.type === 'checkbox') val = fm.val.checked;
+                    else if (name === 'expiration_date') { val = parseExpirationForAPI(); if (!val) continue; }
+                    else val = fm.val.value;
+                    if (val !== null && val !== '' && val !== undefined) sel.push({ name, value: val, type: fm.type });
+                    else if (fm.type === 'checkbox') sel.push({ name, value: val, type: fm.type });
+                }
+                return sel;
+            }
+
+            function updateRunButton() { btnRun.disabled = !(users.length > 0 && getSelectedFields().length > 0 && isAuthenticated) || isRunning; }
+
+            function getAuthHeaders() {
+                const h = { 'Accept': 'application/json', 'Content-Type': 'application/json' };
+                if (authType.value === 'basic') { const u = basicUsername.value.trim(), p = basicPassword.value; if (!u || !p) return null; h['Authorization'] = 'Basic ' + btoa(unescape(encodeURIComponent(u + ':' + p))); }
+                else { const u = apiKeyUser.value.trim(), k = apiKeyValue.value.trim(); if (!u || !k) return null; h['X-Auth-User'] = u; h['X-Auth-Key'] = k; }
+                return h;
+            }
+
+            function getBaseUrl() { let u = apiBaseUrl.value.trim(); if (!u) return null; if (!u.startsWith('http')) u = 'https://' + u; return u.replace(/\/+$/, ''); }
+
+            function lockCardsForAuth() { [uploadCard, fieldsCard, actionsCard, logCard].forEach(c => c.classList.add('locked-card')); configCard.classList.remove('locked-card'); btnLogin.disabled = false; authStatusBadge.textContent = 'Not connected'; authStatusBadge.className = 'auth-status unlocked'; }
+            function unlockCardsAfterAuth() { [uploadCard, fieldsCard, actionsCard, logCard].forEach(c => c.classList.remove('locked-card')); configCard.classList.add('locked-card'); btnLogin.disabled = true; authStatusBadge.textContent = 'Connected'; authStatusBadge.className = 'auth-status locked'; [apiBaseUrl, authType, basicUsername, basicPassword, apiKeyUser, apiKeyValue].forEach(el => el.disabled = true); }
+            function lockCardsForExecution() { [uploadCard, fieldsCard].forEach(c => c.classList.add('locked-card')); actionsCard.classList.add('locked-card'); btnStop.disabled = false; btnStop.style.pointerEvents = 'auto'; btnStop.style.opacity = '1'; logCard.classList.remove('locked-card'); }
+            function unlockCardsAfterExecution() { [uploadCard, fieldsCard, actionsCard].forEach(c => c.classList.remove('locked-card')); logCard.classList.remove('locked-card'); updateRunButton(); if (results.length) btnExportCSV.disabled = false; }
+
+            window.doLogin = async function () {
+                if (isAuthenticated) return;
+                const base = getBaseUrl(); if (!base) return showToast('Enter API Base URL.', 'error');
+                const headers = getAuthHeaders(); if (!headers) return showToast('Provide valid credentials.', 'error');
+                btnLogin.disabled = true; btnLogin.textContent = 'Connecting...';
+                try {
+                    const resp = await fetch(`${base}/api/profiles?limit=-1`, { headers });
+                    if (resp.status === 401 || resp.status === 403) { showToast('Authentication failed.', 'error'); btnLogin.disabled = false; btnLogin.textContent = 'Connect & Login'; return; }
+                    if (!resp.ok && resp.status !== 404) { const v = await fetch(`${base}/api/version`, { headers }); if (!v.ok) { showToast(`Connection failed: HTTP ${resp.status}`, 'error'); btnLogin.disabled = false; btnLogin.textContent = 'Connect & Login'; return; } showToast('Connected but profiles endpoint not accessible.', 'warning'); valProfile.innerHTML = '<option value="">-- No profiles loaded --</option>'; }
+                    else if (resp.ok) { const data = await resp.json(); const profiles = Array.isArray(data) ? data : [data]; valProfile.innerHTML = '<option value="">-- Select profile --</option>'; profiles.forEach(p => { const n = p.profile_name || p.id; const opt = document.createElement('option'); opt.value = n; opt.textContent = n; valProfile.appendChild(opt); }); showToast(`Authenticated. ${profiles.length} profiles loaded.`, 'success'); }
+                    isAuthenticated = true; unlockCardsAfterAuth(); updateRunButton(); btnLogin.textContent = 'Connected';
+                } catch (e) { showToast('Network error: ' + e.message, 'error'); btnLogin.disabled = false; btnLogin.textContent = 'Connect & Login'; }
+            };
+
+            window.runUpdates = async function () {
+                if (isRunning || !isAuthenticated) return;
+                const base = getBaseUrl(); if (!base) return showToast('Enter API Base URL.', 'error');
+                const headers = getAuthHeaders(); if (!headers) return showToast('Provide valid credentials.', 'error');
+                const fields = getSelectedFields(); if (!fields.length) return showToast('Select at least one field.', 'warning');
+                if (!users.length) return showToast('No users loaded.', 'warning');
+                results = []; abortController = new AbortController(); isRunning = true; lockCardsForExecution();
+                btnRun.style.display = 'none'; btnStop.style.display = 'inline-flex'; progressWrap.style.display = 'block'; progressText.style.display = 'inline'; progressFill.style.width = '0%'; btnExportCSV.disabled = true;
+                logTableBody.innerHTML = ''; logSummaryBadge.style.display = 'none'; autoScroll = true;
+                appendLog('info', `Starting updates for ${users.length} users.`);
+                let success = 0, error = 0, skipped = 0;
+                for (let i = 0; i < users.length; i++) {
+                    if (abortController.signal.aborted) { appendLog('warning', 'Operation aborted.'); break; }
+                    const username = users[i], url = `${base}/api/users/${encodeURIComponent(username)}`;
+                    appendLog('info', `Processing ${username} (${i + 1}/${users.length})`);
+                    let current = null;
+                    try { const gr = await fetch(url, { headers, signal: abortController.signal }); if (gr.ok) current = await gr.json(); else if (gr.status === 404) { appendLog('error', `User ${username} not found (404).`); results.push({ username, status: 'error', message: 'Not found' }); error++; continue; } else throw new Error(`GET failed (${gr.status})`); }
+                    catch (e) { if (e.name === 'AbortError') break; appendLog('error', `Failed to fetch user ${username}: ${e.message}`); results.push({ username, status: 'error', message: e.message }); error++; continue; }
+                    const changes = [], unchanged = [];
+                    for (const f of fields) { if (f.name === 'password') { changes.push('password (will be set)'); continue; } const cur = (f.type === 'checkbox') ? !!current[f.name] : current[f.name]; const nw = (f.type === 'checkbox') ? !!f.value : f.value; if (cur === nw || (cur == null && nw === '')) unchanged.push(f.name); else changes.push(`${f.name}: ${cur} -> ${nw}`); }
+                    if (changes.length === 0 && unchanged.length === fields.length) { appendLog('success', `No changes needed for ${username}. Skipping.`); results.push({ username, status: 'skipped', message: 'All fields match' }); skipped++; continue; }
+                    let logMsg = ''; if (changes.length) logMsg += `Changes: ${changes.join('; ')}. `; if (unchanged.length) logMsg += `Unchanged: ${unchanged.join(', ')}.`; appendLog('info', `Comparison for ${username}: ${logMsg}`);
+                    const body = {}; fields.forEach(f => body[f.name] = f.value);
+                    try { const pr = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(body), signal: abortController.signal }); if (pr.status === 204 || pr.status === 200) { appendLog('success', `Update successful for ${username}.`); results.push({ username, status: 'success', changes: changes.join('; ') }); success++; } else { let em = ''; try { const j = await pr.json(); em = j.description || j.error || ''; } catch (_) { } appendLog('error', `Update failed for ${username}: ${pr.status} ${em}`); results.push({ username, status: 'error', message: `${pr.status} ${em}` }); error++; } }
+                    catch (e) { if (e.name === 'AbortError') break; appendLog('error', `Network error for ${username}: ${e.message}`); results.push({ username, status: 'error', message: e.message }); error++; }
+                    progressFill.style.width = Math.round(((i + 1) / users.length) * 100) + '%'; progressText.textContent = `${i + 1}/${users.length}`;
+                    if (i < users.length - 1 && !abortController.signal.aborted) await new Promise(r => setTimeout(r, 120));
+                }
+                appendLog('info', `Done: ${success} updated, ${skipped} skipped, ${error} failed.`);
+                logSummaryBadge.textContent = `${success} ok / ${skipped} skip / ${error} fail`; logSummaryBadge.style.display = 'inline-block'; logSummaryBadge.style.background = error > 0 ? '#fef2f2' : '#f0fdf4'; logSummaryBadge.style.color = error > 0 ? '#dc2626' : '#16a34a';
+                isRunning = false; btnRun.style.display = 'inline-flex'; btnStop.style.display = 'none'; unlockCardsAfterExecution(); updateRunButton(); abortController = null;
+            };
+
+            window.stopUpdates = () => { if (abortController) abortController.abort(); };
+            function clearLog() { logTableBody.innerHTML = ''; results = []; btnExportCSV.disabled = true; logSummaryBadge.style.display = 'none'; }
+            window.clearLog = clearLog;
+
+            function appendLog(type, msg) {
+                const row = document.createElement('tr'); row.className = `log-${type}`;
+                row.innerHTML = `<td class="log-timestamp">[${new Date().toLocaleTimeString('en-GB', { hour12: false })}]</td><td class="log-message">${escapeHTML(msg)}</td>`;
+                logTableBody.appendChild(row); if (autoScroll) logOutput.scrollTop = logOutput.scrollHeight;
+            }
+            logOutput.addEventListener('scroll', () => { const t = 20; autoScroll = logOutput.scrollTop + logOutput.clientHeight >= logOutput.scrollHeight - t; });
+
+            function showToast(msg, type = 'info') { const t = document.createElement('div'); t.className = `toast ${type}`; t.textContent = msg; toastContainer.appendChild(t); setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(120%)'; t.style.transition = '0.3s'; setTimeout(() => t.remove(), 300); }, 3000); }
+
+            window.exportCSV = function () {
+                if (!results.length) return showToast('No results to export.', 'warning');
+                const h = ['Username', 'Status', 'Details', 'Timestamp'], rows = results.map(r => [escapeCSV(r.username), escapeCSV(r.status), escapeCSV(r.message || r.changes || ''), escapeCSV(new Date().toISOString())]);
+                const csv = [h.join(','), ...rows.map(r => r.join(','))].join('\n'), blob = new Blob(['\uFEFF' + csv], { type: 'text/csv' }), a = document.createElement('a');
+                a.href = URL.createObjectURL(blob); a.download = `bastion_report_${new Date().toISOString().slice(0, 10)}.csv`; a.click(); URL.revokeObjectURL(a.href);
+            };
+
+            function escapeHTML(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+            function escapeCSV(s) { if (!s) return ''; s = String(s); if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"'; return s; }
+
+            lockCardsForAuth(); updateToggleStatus('force_change_pwd'); updateToggleStatus('is_disabled'); updateRunButton();
+        })();
+    </script>
+</body>
+</html>
